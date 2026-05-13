@@ -30,12 +30,15 @@ def test_config_writer_requires_key() -> None:
 
 
 def test_dashboard_payload_name() -> None:
-    assert build_dashboard_payload()["name"] == "OpenSwarm Product Analytics"
+    payload = build_dashboard_payload()
+
+    assert payload["name"] == "OpenSwarm Product Analytics"
+    assert "OpenSwarm" in payload["tags"]
 
 
 def test_dashboard_agent_usage_groups_by_agent_name() -> None:
     payloads = build_insight_payloads(123)
-    agent_usage = next(payload for payload in payloads if payload["name"] == "Agent usage by agent")
+    agent_usage = next(payload for payload in payloads if payload["name"] == "OpenSwarm / Agent usage by agent")
 
     assert "display" not in agent_usage["query"]
     source = agent_usage["query"]["source"]
@@ -43,6 +46,17 @@ def test_dashboard_agent_usage_groups_by_agent_name() -> None:
     assert source["breakdownFilter"]["breakdown"] == "agent_name"
     assert source["trendsFilter"]["display"] == "ActionsBarValue"
     assert agent_usage["dashboards"] == [123]
+    assert "OpenSwarm" in agent_usage["tags"]
+
+
+def test_dashboard_has_useful_openswarm_sections() -> None:
+    payloads = build_insight_payloads(123)
+    names = {payload["name"] for payload in payloads}
+
+    assert len(payloads) >= 10
+    assert "OpenSwarm / Active installs today" in names
+    assert "OpenSwarm / Messages by role" in names
+    assert "OpenSwarm / Recent telemetry samples" in names
 
 
 def test_dashboard_dry_run_payload_has_no_secret_fields() -> None:
@@ -55,7 +69,7 @@ def test_dashboard_dry_run_payload_has_no_secret_fields() -> None:
 
 def test_dashboard_error_rate_uses_hogql_rate_query() -> None:
     payloads = build_insight_payloads(123)
-    error_rate = next(payload for payload in payloads if payload["name"] == "Error rate")
+    error_rate = next(payload for payload in payloads if payload["name"] == "OpenSwarm / Error rate by day")
 
     assert error_rate["query"]["kind"] == "DataVisualizationNode"
     source = error_rate["query"]["source"]
