@@ -6,6 +6,7 @@ OpenSwarm has backend-only PostHog telemetry for product analytics. It is enable
 
 - npm releases can include a generated `openswarm_telemetry_config.py` file created by CI from `POSTHOG_API_KEY` and `POSTHOG_HOST` GitHub secrets.
 - GitHub/source installs do not include a capture key and do not send telemetry unless the user explicitly sets `POSTHOG_API_KEY`.
+- Python wheel/sdist artifacts intentionally exclude `openswarm_telemetry_config.py`; default telemetry injection is npm-release-only.
 - Environment variables always win over the generated npm config.
 - The runtime PostHog capture key shipped in npm is treated as public. Never use a personal API key for runtime telemetry.
 
@@ -74,6 +75,8 @@ Raw workspace paths, raw user identifiers, API keys, emails, and Composio IDs ar
 - `telemetry_smoke_test` (manual smoke script only)
 
 `agent_name` is sent as a raw, first-class property on agent-relevant events so product analytics can group usage by agent. `agent_id` remains HMAC-derived.
+
+Runtime telemetry rejects event names outside this allowlist before initializing PostHog or building event properties.
 
 ## Allowed Properties
 

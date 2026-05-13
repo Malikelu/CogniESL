@@ -32,6 +32,9 @@
         "virtual_assistant/",
         "patches/",
         "docs/telemetry.md",
+        "scripts/",
+        "setup.py",
+        "MANIFEST.in",
         "pyproject.toml",
         "package.json",
         "package-lock.json"

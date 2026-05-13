@@ -1,7 +1,14 @@
 from __future__ import annotations
 
+import os
+import subprocess
+import sys
+import zipfile
+from pathlib import Path
+
 import pytest
 
+from scripts.check_telemetry_artifact import contains_generated_config
 from scripts.create_posthog_dashboard import build_dashboard_payload, build_dry_run_payload, build_insight_payloads
 from scripts.smoke_telemetry import SMOKE_EVENT, build_smoke_properties
 from scripts.write_telemetry_config import build_config_source
@@ -48,3 +55,49 @@ def test_smoke_script_uses_manual_smoke_event() -> None:
     assert SMOKE_EVENT == "telemetry_smoke_test"
     assert props["status"] == "manual"
     assert "POSTHOG_API_KEY" not in str(props)
+
+
+def test_artifact_checker_detects_stale_generated_config(tmp_path) -> None:
+    build_dir = tmp_path / "build" / "lib"
+    build_dir.mkdir(parents=True)
+    (build_dir / "openswarm_telemetry_config.py").write_text("POSTHOG_API_KEY = 'ph_stale'\n", encoding="utf-8")
+
+    assert contains_generated_config(tmp_path / "build")
+
+
+def test_python_wheel_excludes_stale_generated_config(tmp_path) -> None:
+    repo = Path(__file__).resolve().parents[1]
+    root_generated_config = repo / "openswarm_telemetry_config.py"
+    stale_build_config = repo / "build" / "lib" / "openswarm_telemetry_config.py"
+    root_generated_config.write_text("POSTHOG_API_KEY = 'ph_root'\n", encoding="utf-8")
+    stale_build_config.parent.mkdir(parents=True, exist_ok=True)
+    stale_build_config.write_text("POSTHOG_API_KEY = 'ph_stale'\n", encoding="utf-8")
+
+    try:
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "pip",
+                "wheel",
+                "--no-build-isolation",
+                "--no-deps",
+                "-w",
+                str(tmp_path),
+                ".",
+            ],
+            cwd=repo,
+            env={**os.environ, "OPENSWARM_TELEMETRY_ALLOW_TESTS": "1"},
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        assert result.returncode == 0, result.stderr
+        wheel = next(tmp_path.glob("*.whl"))
+        with zipfile.ZipFile(wheel) as archive:
+            names = archive.namelist()
+        assert "openswarm_telemetry_config.py" not in names
+        assert not any(name.startswith("build/") for name in names)
+    finally:
+        root_generated_config.unlink(missing_ok=True)
+        stale_build_config.unlink(missing_ok=True)

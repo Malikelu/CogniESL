@@ -55,6 +55,23 @@ ALLOWED_PROPERTIES = {
     "workspace_id",
 }
 
+ALLOWED_EVENTS = {
+    "agent_run_completed",
+    "agent_run_started",
+    "app_started",
+    "error",
+    "handoff",
+    "install_created",
+    "llm_generation_completed",
+    "message_sent",
+    "onboarding_completed",
+    "provider_configured",
+    "swarm_run_completed",
+    "swarm_run_started",
+    "telemetry_smoke_test",
+    "tool_invoked",
+}
+
 CONTENT_LIKE_KEYS = {
     "arguments",
     "content",
@@ -349,6 +366,9 @@ def sanitize_properties(properties: dict[str, Any] | None) -> dict[str, Any]:
 
 
 def capture(event: str, properties: dict[str, Any] | None = None) -> bool:
+    if event not in ALLOWED_EVENTS:
+        logger.debug("Telemetry event %s is not allowlisted", event)
+        return False
     client = _get_client()
     if client is None:
         return False

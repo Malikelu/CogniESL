@@ -70,12 +70,25 @@ py-modules = [
     "server",
     "telemetry",
     "telemetry_hooks",
-    "openswarm_telemetry_config",
 ]
 
 [tool.setuptools.packages.find]
 where = ["."]
-exclude = ["agentswarm-cli*", "venv*", ".venv*", ".agency_swarm*", "node_modules*", "*.node_modules*", "activity*", "mnt*", "pptx*", "slides"]
+exclude = [
+    "agentswarm-cli*",
+    "venv*",
+    ".venv*",
+    ".agency_swarm*",
+    "node_modules*",
+    "*.node_modules*",
+    "activity*",
+    "mnt*",
+    "pptx*",
+    "slides",
+    "build*",
+    "dist*",
+    "*.egg-info*",
+]
 
 [tool.setuptools.package-data]
 "*" = ["*.md", "*.json", "agency-*"]

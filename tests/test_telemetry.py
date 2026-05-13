@@ -96,6 +96,22 @@ def test_source_install_without_key_is_noop(telemetry_events: list[dict]) -> Non
     assert telemetry_events == []
 
 
+def test_unknown_event_is_rejected_before_client_or_state_creation(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path,
+    telemetry_events: list[dict],
+) -> None:
+    config_dir = tmp_path / "unknown-event-config"
+    monkeypatch.setenv("OPENSWARM_CONFIG_DIR", str(config_dir))
+    monkeypatch.setenv("POSTHOG_API_KEY", "ph_env")
+    telemetry._reset_for_tests()
+    telemetry.set_posthog_factory_for_tests(lambda api_key, host: FakePostHog(api_key, host, telemetry_events))
+
+    assert not telemetry.capture("user_supplied_event_name", {"agent_name": "Docs Agent"})
+    assert telemetry_events == []
+    assert not (config_dir / "telemetry.json").exists()
+
+
 @pytest.mark.parametrize(
     ("env_key", "env_value"),
     [
