@@ -11,6 +11,20 @@ from typing import Any
 DEFAULT_POSTHOG_APP_HOST = "https://us.posthog.com"
 DASHBOARD_NAME = "OpenSwarm Product Analytics"
 DASHBOARD_TAGS = ["OpenSwarm", "Telemetry"]
+DASHBOARD_LAYOUT = [
+    ("OpenSwarm / Active installs today", 0, 0, 0, 3, 3),
+    ("OpenSwarm / Messages today", 1, 3, 0, 3, 3),
+    ("OpenSwarm / Agent runs today", 2, 6, 0, 3, 3),
+    ("OpenSwarm / Errors today", 3, 9, 0, 3, 3),
+    ("OpenSwarm / Product activity by day", 4, 0, 3, 12, 5),
+    ("OpenSwarm / Messages by role", 5, 0, 8, 6, 4),
+    ("OpenSwarm / Agent usage by agent", 6, 6, 8, 6, 4),
+    ("OpenSwarm / Tool usage by tool", 7, 0, 12, 6, 4),
+    ("OpenSwarm / Errors by category", 8, 6, 12, 6, 4),
+    ("OpenSwarm / Errors by type", 9, 0, 16, 6, 4),
+    ("OpenSwarm / Error rate by day", 10, 6, 16, 6, 4),
+    ("OpenSwarm / Recent telemetry samples", 11, 0, 20, 12, 5),
+]
 
 
 def build_dashboard_payload() -> dict[str, Any]:
@@ -169,6 +183,32 @@ def build_insight_payloads(dashboard_id: int | str) -> list[dict[str, Any]]:
     ]
 
 
+def build_dashboard_tile_layouts(dashboard: dict[str, Any]) -> list[dict[str, Any]]:
+    tiles_by_name = {
+        tile.get("insight", {}).get("name"): tile
+        for tile in dashboard.get("tiles", [])
+        if tile.get("insight", {}).get("name")
+    }
+    layouts: list[dict[str, Any]] = []
+    xs_y = 0
+    for insight_name, order, x, y, width, height in DASHBOARD_LAYOUT:
+        tile = tiles_by_name.get(insight_name)
+        if not tile:
+            raise ValueError(f"Dashboard is missing tile for {insight_name}")
+        layouts.append(
+            {
+                "id": tile["id"],
+                "order": order,
+                "layouts": {
+                    "sm": {"x": x, "y": y, "w": width, "h": height},
+                    "xs": {"x": 0, "y": xs_y, "w": 1, "h": height},
+                },
+            }
+        )
+        xs_y += height
+    return layouts
+
+
 def build_dry_run_payload(environment_id: str = "POSTHOG_ENVIRONMENT_ID") -> dict[str, Any]:
     dashboard_id = "DRY_RUN_DASHBOARD_ID"
     return {
@@ -189,12 +229,31 @@ def build_dry_run_payload(environment_id: str = "POSTHOG_ENVIRONMENT_ID") -> dic
 
 
 def _post_json(host: str, path: str, api_key: str, payload: dict[str, Any]) -> dict[str, Any]:
+    return _request_json(host, path, api_key, method="POST", payload=payload)
+
+
+def _patch_json(host: str, path: str, api_key: str, payload: dict[str, Any]) -> dict[str, Any]:
+    return _request_json(host, path, api_key, method="PATCH", payload=payload)
+
+
+def _get_json(host: str, path: str, api_key: str) -> dict[str, Any]:
+    return _request_json(host, path, api_key, method="GET")
+
+
+def _request_json(
+    host: str,
+    path: str,
+    api_key: str,
+    *,
+    method: str,
+    payload: dict[str, Any] | None = None,
+) -> dict[str, Any]:
     url = f"{host.rstrip('/')}{path}"
-    data = json.dumps(payload).encode("utf-8")
+    data = json.dumps(payload).encode("utf-8") if payload is not None else None
     request = urllib.request.Request(
         url,
         data=data,
-        method="POST",
+        method=method,
         headers={
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json",
@@ -227,7 +286,15 @@ def create_dashboard(host: str, environment_id: str, personal_api_key: str) -> d
         )
         for insight_payload in reversed(build_insight_payloads(dashboard_id))
     ]
-    return {"dashboard": dashboard, "insights": insights}
+    dashboard = _get_json(host, f"/api/environments/{environment_id}/dashboards/{dashboard_id}/", personal_api_key)
+    layout = build_dashboard_tile_layouts(dashboard)
+    dashboard = _patch_json(
+        host,
+        f"/api/environments/{environment_id}/dashboards/{dashboard_id}/",
+        personal_api_key,
+        {"tiles": layout},
+    )
+    return {"dashboard": dashboard, "insights": insights, "layout": layout}
 
 
 def main() -> int:

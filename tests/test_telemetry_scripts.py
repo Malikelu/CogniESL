@@ -11,7 +11,12 @@ from pathlib import Path
 import pytest
 
 from scripts.check_telemetry_artifact import contains_generated_config
-from scripts.create_posthog_dashboard import build_dashboard_payload, build_dry_run_payload, build_insight_payloads
+from scripts.create_posthog_dashboard import (
+    build_dashboard_payload,
+    build_dashboard_tile_layouts,
+    build_dry_run_payload,
+    build_insight_payloads,
+)
 from scripts.smoke_telemetry import SMOKE_EVENT, build_smoke_properties
 from scripts.write_telemetry_config import build_config_source
 
@@ -57,6 +62,34 @@ def test_dashboard_has_useful_openswarm_sections() -> None:
     assert "OpenSwarm / Active installs today" in names
     assert "OpenSwarm / Messages by role" in names
     assert "OpenSwarm / Recent telemetry samples" in names
+
+
+def test_dashboard_layout_puts_kpis_in_one_compact_row() -> None:
+    payloads = build_insight_payloads(123)
+    fake_dashboard = {
+        "tiles": [
+            {"id": index + 1, "insight": {"name": payload["name"]}}
+            for index, payload in enumerate(payloads)
+        ]
+    }
+
+    layouts = build_dashboard_tile_layouts(fake_dashboard)
+
+    first_row = layouts[:4]
+    assert [tile["layouts"]["sm"] for tile in first_row] == [
+        {"x": 0, "y": 0, "w": 3, "h": 3},
+        {"x": 3, "y": 0, "w": 3, "h": 3},
+        {"x": 6, "y": 0, "w": 3, "h": 3},
+        {"x": 9, "y": 0, "w": 3, "h": 3},
+    ]
+
+    by_id = {tile["id"]: tile for tile in layouts}
+    messages_by_role_id = payloads.index(next(p for p in payloads if p["name"] == "OpenSwarm / Messages by role")) + 1
+    agent_usage_id = payloads.index(next(p for p in payloads if p["name"] == "OpenSwarm / Agent usage by agent")) + 1
+    assert by_id[messages_by_role_id]["order"] == 5
+    assert by_id[messages_by_role_id]["layouts"]["sm"]["x"] == 0
+    assert by_id[agent_usage_id]["order"] == 6
+    assert by_id[agent_usage_id]["layouts"]["sm"]["x"] == 6
 
 
 def test_dashboard_dry_run_payload_has_no_secret_fields() -> None:
