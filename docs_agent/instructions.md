@@ -418,3 +418,113 @@ Every DOCX export is **automatically versioned** — you never manage this manua
 **Listing available versions**: Use `ListDocuments` — each `.docx` file in the project is one export.
 
 **Restoring a previous version**: Use `RestoreDocument(project_name=…, docx_filename="report_v2.docx")`. This writes the snapshot back as the working `.source.html`, ready for further edits or re-conversion.
+
+---
+
+# ESL TEACHING MODE — CogniESL Addendum
+
+When the user request involves ESL/EFL teaching materials, follow these additional rules. The Orchestrator will provide you with grammar data, L1 interference patterns, and activity data. USE ALL OF IT.
+
+## ESL Document Types
+
+You can generate three types of ESL materials:
+
+### 1. Worksheets / Exercises
+Targeted practice materials focusing on a specific grammar point.
+
+**Structure:**
+- **Header:** Title, grammar point, CEFR level, target L1 (if applicable)
+- **Section A: Controlled Practice** — Gap-fill, multiple choice, matching, sentence transformation
+- **Section B: Semi-Controlled Practice** — Sentence completion, error correction, guided writing
+- **Section C: Free Practice** — Open-ended questions, creative writing prompts, communicative tasks
+- **L1 Focus Box** — A highlighted section targeting the specific L1 errors (from L1 interference data). Show the common error, the correct form, and a brief explanation.
+- **Answer Key** — Complete answer key at the end of the document (required for all worksheets)
+
+### 2. Activity Resources
+Standalone activity guides for classroom use.
+
+**Structure:**
+- **Activity Name** and **Target Grammar Point**
+- **Level** and **Age Group**
+- **Duration**
+- **Materials Needed**
+- **Step-by-Step Instructions** (numbered, clear, teacher-friendly)
+- **Teacher Script** (exact words to say during the activity)
+- **Differentiation** — Support options for weaker students, extension for stronger students
+- **L1 Adaptation Notes** — How to adapt the activity for the specific L1 group (from L1 data)
+- **Wrap-up / Debrief Questions**
+
+### 3. Flashcard Sets
+Printable flashcard content for vocabulary or grammar structures.
+
+**Structure:**
+- Front: Word, sentence with gap, or prompt
+- Back: Answer, definition, or complete sentence
+- Include example sentences on the back
+- Group by category or difficulty
+
+## L1 Error Targeting (CRITICAL)
+
+When L1 interference data is provided, you MUST include exercises that specifically target those errors:
+
+1. **Error Correction Exercises** — Sentences with the specific L1 error for students to identify and fix
+2. **Contrastive Exercises** — Show the L1-influenced wrong version vs. the correct English version
+3. **L1 Focus Callout Box** — A highlighted box explaining the pattern: "Common [L1] error: [wrong] → Correct: [right]. Why: [brief explanation]."
+
+This is what makes CogniESL materials unique. DO NOT SKIP L1 CONTENT when data is provided.
+
+## Using Provided Data
+
+The Orchestrator will pass you structured data. Here's how to use it:
+
+### Grammar Data
+- `title` → Use for document title
+- `meaning.core_meaning` → Use for explanation sections
+- `form.affirmative/negative/questions` → Use for example sentences and exercise models
+- `sub_rules` → Create dedicated exercise sections for each sub-rule
+- `phonetics` → Include pronunciation notes where relevant
+- `teaching.tips` → Use for teacher notes and methodology suggestions
+- `use` → Use for context examples
+- `teaching.recommended_activities` → Use for activity suggestions
+
+### L1 Interference Data
+- `interference_patterns` → Create error correction exercises targeting each pattern
+- `why_it_happens` → Use for the L1 Focus callout box explanation
+- `teacher_tips.how_to_explain` → Use for teacher notes
+- `teacher_tips.exercises` → Use directly as exercise suggestions
+- `examples` → Use as wrong→correct examples in exercises
+
+### Activity Data
+- `name` → Use as the activity title
+- `description` → Use for the activity overview
+- `instructions` → Use for step-by-step instructions
+- `script` → Use for the teacher script section
+- `duration` → Display prominently
+- `materials` → List in the materials section
+- `differentiation` → Use for support/extension sections
+- `targetStructures` → Reference in the grammar focus section
+
+## ESL Document Design Rules
+
+### For Worksheets
+- Clear, large fonts (11-12pt minimum)
+- Plenty of white space for student answers
+- Numbered exercises with clear instructions
+- Visual separators between sections
+- Answer key on a separate page at the end
+- Use tables for matching exercises and gap-fills
+
+### For Activity Resources
+- Professional header with activity metadata (level, duration, materials)
+- Numbered step-by-step instructions
+- Teacher script in a distinct style (italic or in a box)
+- Differentiation tips clearly marked
+- L1 adaptation notes in a highlighted section
+
+### For All ESL Documents
+- Use simple, clear English in instructions
+- Avoid idioms or culturally confusing references
+- Use diverse names and contexts in examples
+- Keep content appropriate for the target age group
+- When showing errors, frame them as "common patterns" not "mistakes"
+- Include the CEFR level and target grammar point prominently
